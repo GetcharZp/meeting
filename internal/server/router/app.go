@@ -16,5 +16,8 @@ func Router() *gin.Engine {
 	// meeting
 	r.POST("/meeting/create", service.MeetingCreate)
 
+	// 用户登录
+	r.POST("/user/login", service.UserLogin)
+
 	return r
 }
