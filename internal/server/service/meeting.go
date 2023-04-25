@@ -9,6 +9,7 @@ import (
 )
 
 func MeetingCreate(c *gin.Context) {
+	uc := c.MustGet("user_claims").(*helper.UserClaims)
 	in := new(MeetingCreateRequest)
 	err := c.ShouldBindJSON(in)
 	if err != nil {
@@ -23,7 +24,7 @@ func MeetingCreate(c *gin.Context) {
 		Name:     in.Name,
 		BeginAt:  time.UnixMilli(in.CreateAt),
 		EndAt:    time.UnixMilli(in.EndAt),
-		CreateId: 0, // todo: 从 auth 中间件中获取用户的信息
+		CreateId: uc.Id,
 	}).Error
 	if err != nil {
 		c.JSON(http.StatusOK, gin.H{
