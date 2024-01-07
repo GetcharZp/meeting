@@ -5,7 +5,7 @@
 ## 核心扩展
 + https://github.com/pion/webrtc
 ```shell
-go get github.com/pion/webrtc/v3 
+go get -u github.com/pion/webrtc/v3 
 ```
 
 ## 系统模块
@@ -19,5 +19,6 @@ go get github.com/pion/webrtc/v3
   + [x] 登录
 + [ ] WebRTC
   + [x] data channels
-  + [ ] 音视频通信
+  + [x] 屏幕共享
+  + [ ] 一对一音视频通信
 

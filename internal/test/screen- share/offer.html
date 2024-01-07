@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Screen Share</title>
+</head>
+<body>
+<button onclick="createOffer()">点击开始共享</button>
+
+当前共享的区域: <br>
+<video id="localVideo" autoplay width="50%" height="auto"></video>
+
+<br>
+ANSWER: <br>
+<textarea id="answer" onchange="setAnswer()"></textarea>
+<br>
+ANSWER CANDIDATE: <br>
+<textarea id="answer_candidate" onchange="setAnswerCandidate()"></textarea>
+远程共享的区域: <br>
+<video id="remoteVideo" autoplay width="50%" height="auto"></video>
+
+<script>
+    // 1. 创建 PC
+    // 2. 获取流
+    // 3. 流添加到PC，创建 offer
+    // 4. 监听 stream
+    let pc = new RTCPeerConnection();
+
+    // 远程流
+    pc.onaddstream = function (e) {
+        document.getElementById('remoteVideo').srcObject = e.stream;
+    };
+
+    // 候选者
+    pc.onicecandidate = function (e) {
+        if (e.candidate) {
+            console.log('offer candidate', JSON.stringify(e.candidate));
+        }
+    };
+
+    function createOffer() {
+        navigator.mediaDevices.getDisplayMedia().then(stream => {
+            document.getElementById('localVideo').srcObject = stream;
+
+            stream.getTracks().forEach(track => {
+                pc.addTrack(track, stream);
+            });
+
+            pc.createOffer().then(offer => {
+                console.log('offer', JSON.stringify(offer.sdp));
+                pc.setLocalDescription(offer);
+            });
+        })
+    }
+
+    function setAnswer() {
+        let answer = JSON.parse(document.getElementById('answer').value);
+        pc.setRemoteDescription({'type': 'answer', 'sdp': answer});
+    }
+
+    function setAnswerCandidate() {
+        let answerCandidate = JSON.parse(document.getElementById('answer_candidate').value);
+        pc.addIceCandidate(answerCandidate);
+    }
+</script>
+</body>
+</html>
