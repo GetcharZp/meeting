@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Screen Share</title>
+</head>
+<body>
+OFFER: <br>
+<textarea id="offer" onchange="createAnswer()"></textarea><br>
+OFFER CANDIDATE: <br>
+<textarea id="offer_candidate" onchange="setOfferCandidate()"></textarea>
+<button id="receive" onclick="receive()" style="display: none">接听</button>
+
+当前共享的区域: <br>
+<video id="localVideo" autoplay width="50%" height="auto"></video>
+
+<br>
+远程共享的区域: <br>
+<video id="remoteVideo" autoplay width="50%" height="auto"></video>
+
+<script>
+    // 1. 创建 PC
+    // 2. 获取流
+    // 3. 流添加到PC，创建 answer
+    // 4. 异步监听 stream
+
+    const roomIdentity = '123456';
+    const userIdentity = 'answer';
+    let offerSdp;
+    let ws = new WebSocket('ws://127.0.0.1:8080/ws/p2p/'+roomIdentity+'/' +userIdentity)
+
+    ws.addEventListener('message', (event) => {
+        let data = JSON.parse(event.data)
+        // sdp
+        if (data.key === 'offer_sdp' && data.user_identity !== userIdentity) {
+            offerSdp = data.value;
+            document.getElementById('receive').style.display = 'block';
+        }
+        // candidate
+        if (data.key === 'offer_candidate' && data.user_identity !== userIdentity) {
+            pc.addIceCandidate(data.value);
+        }
+    })
+
+    let pc = new RTCPeerConnection(null);
+
+    // 远程流
+    pc.onaddstream =  e => {
+        document.getElementById('remoteVideo').srcObject = e.stream;
+    };
+
+    // 候选者
+    pc.onicecandidate = e => {
+        if (e.candidate) {
+            console.log('answer candidate', JSON.stringify(e.candidate));
+            ws.send(JSON.stringify({
+                'user_identity': userIdentity,
+                'room_identity': roomIdentity,
+                'key': 'answer_candidate',
+                'value': e.candidate
+            }));
+        }
+    };
+
+    function createAnswer() {
+        navigator.mediaDevices.getDisplayMedia().then(stream => {
+            document.getElementById('localVideo').srcObject = stream;
+
+            stream.getTracks().forEach(track => {
+                pc.addTrack(track, stream);
+            });
+
+            let offer = JSON.parse(document.getElementById('offer').value);
+            pc.setRemoteDescription({'type': 'offer', 'sdp': offer});
+            pc.createAnswer().then(answer => {
+                console.log('answer', JSON.stringify(answer.sdp));
+                pc.setLocalDescription(answer);
+            });
+        })
+    }
+
+    function receive() {
+        navigator.mediaDevices.getDisplayMedia().then(stream => {
+            document.getElementById('localVideo').srcObject = stream;
+
+            stream.getTracks().forEach(track => {
+                pc.addTrack(track, stream);
+            });
+
+            pc.setRemoteDescription(offerSdp);
+            pc.createAnswer().then(answer => {
+                pc.setLocalDescription(answer);
+                ws.send(JSON.stringify({
+                    'user_identity': userIdentity,
+                    'room_identity': roomIdentity,
+                    'key': 'answer_sdp',
+                    'value': answer
+                }));
+            });
+        })
+    }
+
+    function setOfferCandidate() {
+        let offerCandidate = JSON.parse(document.getElementById('offer_candidate').value);
+        pc.addIceCandidate(offerCandidate);
+    }
+</script>
+
+</body>
+</html>

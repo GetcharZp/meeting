@@ -18,6 +18,9 @@ func Router() *gin.Engine {
 	// 用户登录
 	r.POST("/user/login", service.UserLogin)
 
+	// ws
+	r.GET("/ws/p2p/:room_identity/:user_identity", service.WsP2PConnection)
+
 	auth := r.Group("/auth", middlewares.Auth())
 
 	// meeting

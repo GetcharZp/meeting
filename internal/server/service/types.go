@@ -30,3 +30,15 @@ type MeetingEditRequest struct {
 	Identity string `json:"identity"`
 	*MeetingCreateRequest
 }
+
+type WsP2PConnectionRequest struct {
+	RoomIdentity string `json:"room_identity" uri:"room_identity"`
+	UserIdentity string `json:"user_identity" uri:"user_identity"`
+}
+
+type WsP2PConnectionMessage struct {
+	RoomIdentity string `json:"room_identity"`
+	UserIdentity string `json:"user_identity"`
+	Key          string `json:"key"`
+	Value        any    `json:"value"`
+}
